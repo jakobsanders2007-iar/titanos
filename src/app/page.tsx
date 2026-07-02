@@ -22,7 +22,7 @@ export default function HomePage() {
             </div>
             <div>
               <div className="text-white font-bold text-sm leading-none">Titan</div>
-              <div className="text-gray-500 text-xs leading-none mt-0.5">Locksmith OS</div>
+              <div className="text-gray-500 text-xs leading-none mt-0.5">Field OS</div>
             </div>
           </div>
           <Link href="/dashboard" className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-gray-950 text-sm font-semibold rounded transition-colors">
@@ -119,7 +119,7 @@ export default function HomePage() {
             <div className="w-5 h-5 bg-amber-500 rounded flex items-center justify-center">
               <Lock className="w-3 h-3 text-gray-950" />
             </div>
-            <span className="text-xs text-gray-500">Titan Locksmith OS</span>
+            <span className="text-xs text-gray-500">Titan Field OS</span>
           </div>
           <div className="text-xs text-gray-600">Built for locksmith operators.</div>
         </div>

@@ -437,3 +437,317 @@ create policy "company members can select activity_log"
   on activity_log for select using (company_id = my_company_id());
 create policy "company members can insert activity_log"
   on activity_log for insert with check (company_id = my_company_id());
+
+-- ============================================================================
+-- TITAN FIELD OS EXPANSION — Sales, AI Receptionist, Shopper, Training
+-- ============================================================================
+
+-- LEADS
+create table if not exists leads (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  customer_id uuid references customers(id) on delete set null,
+  name text not null,
+  phone text,
+  email text,
+  source text not null default 'Phone',
+  stage text not null default 'New Lead',
+  vertical text not null default 'Locksmith',
+  service_need text,
+  estimated_value numeric(10,2) default 0,
+  assigned_to uuid references profiles(id) on delete set null,
+  next_followup timestamptz,
+  notes text,
+  lost_reason text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists leads_company_stage_idx on leads (company_id, stage);
+create trigger leads_updated_at before update on leads
+  for each row execute function set_updated_at();
+
+-- QUOTES
+create table if not exists quotes (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  lead_id uuid references leads(id) on delete set null,
+  customer_id uuid references customers(id) on delete set null,
+  job_id uuid references jobs(id) on delete set null,
+  service text not null,
+  vertical text not null default 'Locksmith',
+  amount numeric(10,2) not null default 0,
+  status text not null default 'Draft', -- Draft/Sent/Viewed/Accepted/Declined/Expired
+  sent_at timestamptz,
+  decided_at timestamptz,
+  notes text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists quotes_company_status_idx on quotes (company_id, status);
+create trigger quotes_updated_at before update on quotes
+  for each row execute function set_updated_at();
+
+-- CRM FOLLOW-UPS
+create table if not exists crm_followups (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  lead_id uuid references leads(id) on delete cascade,
+  due_at timestamptz not null,
+  channel text default 'Phone',
+  note text,
+  completed_at timestamptz,
+  created_at timestamptz not null default now()
+);
+create index if not exists crm_followups_company_due_idx on crm_followups (company_id, due_at);
+
+-- AI RECEPTIONIST CALLS
+create table if not exists ai_receptionist_calls (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  caller_name text,
+  caller_phone text,
+  received_at timestamptz not null default now(),
+  duration_sec int default 0,
+  service_type text,
+  vertical text default 'Locksmith',
+  urgency text default 'Flexible',
+  address text,
+  quoted_estimate numeric(10,2),
+  outcome text not null default 'Info Only',
+  job_id uuid references jobs(id) on delete set null,
+  lead_id uuid references leads(id) on delete set null,
+  escalation_needed boolean not null default false,
+  ai_confidence numeric(4,3) default 0,
+  summary text,
+  transcript text,
+  created_at timestamptz not null default now()
+);
+create index if not exists ai_calls_company_received_idx on ai_receptionist_calls (company_id, received_at desc);
+
+-- AI RECEPTIONIST SETTINGS
+create table if not exists ai_receptionist_settings (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null unique references companies(id) on delete cascade,
+  greeting_script text,
+  escalation_rules jsonb default '{}'::jsonb,
+  business_hours jsonb default '{}'::jsonb,
+  emergency_keywords text[] default '{}',
+  enabled boolean not null default true,
+  updated_at timestamptz not null default now()
+);
+create trigger ai_receptionist_settings_updated_at before update on ai_receptionist_settings
+  for each row execute function set_updated_at();
+
+-- AI CONVERSATIONS / MESSAGES (consultant chat)
+create table if not exists ai_conversations (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  user_id uuid references profiles(id) on delete set null,
+  title text,
+  created_at timestamptz not null default now()
+);
+create table if not exists ai_messages (
+  id uuid primary key default gen_random_uuid(),
+  conversation_id uuid not null references ai_conversations(id) on delete cascade,
+  company_id uuid not null references companies(id) on delete cascade,
+  role text not null check (role in ('user','assistant','system')),
+  content text not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists ai_messages_conversation_idx on ai_messages (conversation_id, created_at);
+
+-- AI RECOMMENDATIONS
+create table if not exists ai_recommendations (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  severity text not null default 'opportunity', -- critical/warning/opportunity/positive
+  title text not null,
+  body text,
+  module text,
+  href text,
+  dismissed_at timestamptz,
+  created_at timestamptz not null default now()
+);
+create index if not exists ai_recommendations_company_idx on ai_recommendations (company_id, created_at desc);
+
+-- SHOPPER ITEMS + UNIVERSAL CART + PURCHASE HISTORY
+create table if not exists shopper_items (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  name text not null,
+  category text not null,
+  vendor text,
+  price numeric(10,2) not null default 0,
+  unit text default 'unit',
+  urgency text default 'Plan Ahead',
+  reason text,
+  created_at timestamptz not null default now()
+);
+create table if not exists universal_cart_items (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  shopper_item_id uuid references shopper_items(id) on delete cascade,
+  quantity int not null default 1,
+  status text not null default 'pending', -- pending/approved/ordered/received
+  added_by uuid references profiles(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+create table if not exists purchase_history (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  item_name text not null,
+  vendor text,
+  amount numeric(10,2) not null default 0,
+  quantity int not null default 1,
+  purchased_at timestamptz not null default now(),
+  created_at timestamptz not null default now()
+);
+
+-- TRAINING
+create table if not exists training_lessons (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid references companies(id) on delete cascade, -- null = global curriculum
+  title text not null,
+  description text,
+  duration_min int default 10,
+  audience text default 'Everyone',
+  checklist jsonb default '[]'::jsonb,
+  video_url text,
+  sort_order int default 0,
+  created_at timestamptz not null default now()
+);
+create table if not exists training_progress (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  lesson_id uuid not null references training_lessons(id) on delete cascade,
+  user_id uuid not null references profiles(id) on delete cascade,
+  completed_at timestamptz,
+  unique (lesson_id, user_id)
+);
+
+-- VALUATION REPORTS
+create table if not exists valuation_reports (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  inputs jsonb not null default '{}'::jsonb,
+  conservative numeric(12,2),
+  base numeric(12,2),
+  aggressive numeric(12,2),
+  sellability_score int,
+  created_at timestamptz not null default now()
+);
+
+-- EQUIPMENT (HVAC and locksmith installed assets)
+create table if not exists equipment (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  customer_id uuid references customers(id) on delete cascade,
+  vertical text not null default 'HVAC',
+  kind text, -- condenser/furnace/thermostat/smart lock/safe/access control
+  brand text,
+  model text,
+  serial text,
+  installed_at date,
+  warranty_expires date,
+  notes text,
+  created_at timestamptz not null default now()
+);
+
+-- PARTS USED PER JOB
+create table if not exists parts_used (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  job_id uuid not null references jobs(id) on delete cascade,
+  name text not null,
+  quantity int not null default 1,
+  unit_cost numeric(10,2) not null default 0,
+  created_at timestamptz not null default now()
+);
+create index if not exists parts_used_job_idx on parts_used (job_id);
+
+-- MAINTENANCE PLANS (HVAC recurring revenue)
+create table if not exists maintenance_plans (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  customer_id uuid not null references customers(id) on delete cascade,
+  name text not null default 'Annual Maintenance Plan',
+  price_per_year numeric(10,2) not null default 0,
+  visits_per_year int not null default 2,
+  next_visit_due date,
+  status text not null default 'active', -- active/paused/cancelled
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create trigger maintenance_plans_updated_at before update on maintenance_plans
+  for each row execute function set_updated_at();
+
+-- INTEGRATION SETTINGS
+create table if not exists integration_settings (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  provider text not null, -- stripe/twilio/quickbooks/llm
+  settings jsonb not null default '{}'::jsonb,
+  enabled boolean not null default false,
+  updated_at timestamptz not null default now(),
+  unique (company_id, provider)
+);
+create trigger integration_settings_updated_at before update on integration_settings
+  for each row execute function set_updated_at();
+
+-- JOB STATUS HISTORY
+create table if not exists job_status_history (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  job_id uuid not null references jobs(id) on delete cascade,
+  from_status text,
+  to_status text not null,
+  changed_by uuid references profiles(id) on delete set null,
+  changed_at timestamptz not null default now()
+);
+create index if not exists job_status_history_job_idx on job_status_history (job_id, changed_at);
+
+-- RLS for all new tables ------------------------------------------------------
+
+alter table leads enable row level security;
+alter table quotes enable row level security;
+alter table crm_followups enable row level security;
+alter table ai_receptionist_calls enable row level security;
+alter table ai_receptionist_settings enable row level security;
+alter table ai_conversations enable row level security;
+alter table ai_messages enable row level security;
+alter table ai_recommendations enable row level security;
+alter table shopper_items enable row level security;
+alter table universal_cart_items enable row level security;
+alter table purchase_history enable row level security;
+alter table training_lessons enable row level security;
+alter table training_progress enable row level security;
+alter table valuation_reports enable row level security;
+alter table equipment enable row level security;
+alter table parts_used enable row level security;
+alter table maintenance_plans enable row level security;
+alter table integration_settings enable row level security;
+alter table job_status_history enable row level security;
+
+do $$
+declare
+  t text;
+begin
+  foreach t in array array[
+    'leads','quotes','crm_followups','ai_receptionist_calls','ai_receptionist_settings',
+    'ai_conversations','ai_messages','ai_recommendations','shopper_items',
+    'universal_cart_items','purchase_history','training_progress','valuation_reports',
+    'equipment','parts_used','maintenance_plans','integration_settings','job_status_history'
+  ]
+  loop
+    execute format('create policy "company select %1$s" on %1$I for select using (company_id = my_company_id())', t);
+    execute format('create policy "company insert %1$s" on %1$I for insert with check (company_id = my_company_id())', t);
+    execute format('create policy "company update %1$s" on %1$I for update using (company_id = my_company_id())', t);
+    execute format('create policy "company delete %1$s" on %1$I for delete using (company_id = my_company_id())', t);
+  end loop;
+end $$;
+
+-- training_lessons: global rows (company_id null) readable by all authed users
+create policy "read global or company lessons" on training_lessons
+  for select using (company_id is null or company_id = my_company_id());
+create policy "manage company lessons" on training_lessons
+  for all using (company_id = my_company_id()) with check (company_id = my_company_id());

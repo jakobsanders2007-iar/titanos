@@ -55,7 +55,7 @@ function LoginForm() {
             <Lock className="w-5 h-5 text-gray-950" />
           </div>
           <div>
-            <div className="text-white font-bold">Titan Locksmith OS</div>
+            <div className="text-white font-bold">Titan Field OS</div>
             <div className="text-gray-500 text-xs">Operations Platform</div>
           </div>
         </div>

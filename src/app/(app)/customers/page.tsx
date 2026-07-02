@@ -21,8 +21,8 @@ export default function CustomersPage() {
   const [search, setSearch] = useState('')
 
   useEffect(() => {
+    /* eslint-disable @typescript-eslint/no-explicit-any */
     Promise.all([getCustomers(), getJobs()])
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .then(([custs, allJobs]: [any[], any[]]) => {
         const withStats: CustomerWithStats[] = custs.map((c: any) => {
           const custJobs = allJobs.filter((j: any) => j.customer_id === c.id)
@@ -35,6 +35,7 @@ export default function CustomersPage() {
       })
       .catch(e => setError(e.message))
       .finally(() => setLoading(false))
+    /* eslint-enable @typescript-eslint/no-explicit-any */
   }, [])
 
   const filtered = customers.filter(c => {

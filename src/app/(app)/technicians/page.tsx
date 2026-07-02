@@ -24,8 +24,8 @@ export default function TechniciansPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    /* eslint-disable @typescript-eslint/no-explicit-any */
     Promise.all([getTechnicians(), getJobs()])
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .then(([techs, allJobs]: [any[], any[]]) => {
         const stats: TechStats[] = techs.map((tech: any) => {
           const techJobs = allJobs.filter((j: any) => j.technician_id === tech.id)
@@ -41,6 +41,7 @@ export default function TechniciansPage() {
       })
       .catch(e => setError(e.message))
       .finally(() => setLoading(false))
+    /* eslint-enable @typescript-eslint/no-explicit-any */
   }, [])
 
   if (loading) {
