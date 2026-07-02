@@ -3,7 +3,7 @@
 import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Lock, Loader2, AlertCircle } from 'lucide-react'
+import { Brain, Loader2, AlertCircle } from 'lucide-react'
 
 function LoginForm() {
   const router = useRouter()
@@ -52,11 +52,11 @@ function LoginForm() {
         {/* Logo */}
         <div className="flex items-center justify-center gap-2.5 mb-8">
           <div className="w-9 h-9 bg-amber-500 rounded-lg flex items-center justify-center">
-            <Lock className="w-5 h-5 text-gray-950" />
+            <Brain className="w-5 h-5 text-gray-950" />
           </div>
           <div>
-            <div className="text-white font-bold">Titan Field OS</div>
-            <div className="text-gray-500 text-xs">Operations Platform</div>
+            <div className="text-white font-bold">Titan Intelligence OS</div>
+            <div className="text-gray-500 text-xs">Business Intelligence Platform</div>
           </div>
         </div>
 

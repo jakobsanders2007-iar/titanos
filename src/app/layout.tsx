@@ -5,8 +5,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Titan Field OS",
-  description: "Operating system for locksmith businesses",
+  title: "Titan Intelligence OS",
+  description: "The universal business intelligence operating layer — connects every system, explains every why, and tells you what to do next.",
 };
 
 export default function RootLayout({

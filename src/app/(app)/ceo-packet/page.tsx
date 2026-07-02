@@ -107,7 +107,7 @@ export default function CEOPacketPage() {
           <>
             <div className="bg-gradient-to-r from-amber-500/10 to-transparent border border-amber-500/20 rounded-lg p-5">
               <div className="text-xs text-amber-400 uppercase tracking-wide mb-1">Executive Summary — {month}</div>
-              <div className="text-xl font-bold text-white mb-2">Titan Field OS</div>
+              <div className="text-xl font-bold text-white mb-2">Titan Locksmith Demo</div>
               <p className="text-sm text-gray-400 leading-relaxed">
                 Completed <strong className="text-white">{completedJobs.length} jobs</strong> this period with gross revenue of{' '}
                 <strong className="text-white">{formatCurrency(grossRevenue)}</strong> and an average ticket of{' '}
