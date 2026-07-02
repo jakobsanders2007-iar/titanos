@@ -6,8 +6,36 @@ import { StatusBadge } from '@/components/ui/status-badge'
 import { getJobs } from '@/lib/actions/jobs'
 import { getTechnicians } from '@/lib/actions/technicians'
 import { formatCurrency, formatDateTime } from '@/lib/utils'
-import { Search, Filter, Plus, Loader2 } from 'lucide-react'
+import { Search, Filter, Plus, Loader2, Gauge } from 'lucide-react'
+import { JobCockpit } from '@/components/job/job-cockpit'
+import type { EngineJob } from '@/lib/job-engine'
 import type { Technician } from '@/types/database'
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+function rowToEngineJob(j: any): EngineJob {
+  return {
+    id: j.id,
+    customer_id: j.customer_id ?? j.customer?.id ?? '',
+    technician_id: j.technician_id ?? null,
+    service_type: j.service_type,
+    source: j.source ?? 'Manual',
+    status: j.status,
+    address: j.address ?? j.customer?.address ?? '',
+    scheduled_start: j.scheduled_start ?? new Date().toISOString(),
+    estimated_price: j.estimated_price ?? 0,
+    final_price: j.final_price ?? null,
+    amount_collected: j.amount_collected ?? 0,
+    payment_method: j.payment_method ?? null,
+    payment_status: j.payment_status ?? 'Unpaid',
+    cash_verification_status: j.cash_verification_status ?? null,
+    payment_link_sent: j.payment_link_sent ?? false,
+    parts_cost: j.parts_cost ?? 0,
+    technician_notes: j.technician_notes ?? '',
+    notes: j.notes ?? '',
+    updated_at: j.updated_at ?? new Date().toISOString(),
+  }
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 type JobRow = {
   id: string
@@ -35,6 +63,7 @@ export default function JobsPage() {
   const [paymentFilter, setPaymentFilter] = useState('All')
   const [techFilter, setTechFilter] = useState('All')
   const [search, setSearch] = useState('')
+  const [cockpit, setCockpit] = useState<JobRow | null>(null)
 
   useEffect(() => {
     Promise.all([getJobs(), getTechnicians()])
@@ -105,14 +134,14 @@ export default function JobsPage() {
             <table className="w-full text-sm">
               <thead className="sticky top-0 bg-gray-950 border-b border-gray-800">
                 <tr>
-                  {['Job ID', 'Customer', 'Service', 'Technician', 'Scheduled', 'Status', 'Est.', 'Final', 'Payment', 'Source'].map(h => (
-                    <th key={h} className="text-left px-4 py-2.5 text-xs text-gray-500 font-medium uppercase tracking-wide whitespace-nowrap">{h}</th>
+                  {['Job ID', 'Customer', 'Service', 'Technician', 'Scheduled', 'Status', 'Est.', 'Final', 'Payment', 'Source', ''].map((h, i) => (
+                    <th key={i} className="text-left px-4 py-2.5 text-xs text-gray-500 font-medium uppercase tracking-wide whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {filtered.map(job => (
-                  <tr key={job.id} className="border-b border-gray-800/50 hover:bg-gray-900/50 transition-colors">
+                  <tr key={job.id} onClick={() => setCockpit(job)} className="border-b border-gray-800/50 hover:bg-gray-900/50 transition-colors cursor-pointer">
                     <td className="px-4 py-3 text-gray-500 font-mono text-xs">{job.id.slice(0, 8)}</td>
                     <td className="px-4 py-3">
                       <div className="text-white font-medium">{job.customer?.name}</div>
@@ -128,6 +157,9 @@ export default function JobsPage() {
                     </td>
                     <td className="px-4 py-3"><StatusBadge status={job.payment_status ?? ''} /></td>
                     <td className="px-4 py-3 text-gray-500 text-xs">{job.source}</td>
+                    <td className="px-4 py-3">
+                      <span className="inline-flex items-center gap-1 text-xs text-amber-400"><Gauge className="w-3.5 h-3.5" />Cockpit</span>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -141,6 +173,15 @@ export default function JobsPage() {
           )}
         </div>
       </div>
+
+      {cockpit && (
+        <JobCockpit
+          job={rowToEngineJob(cockpit)}
+          customer={cockpit.customer ? { name: cockpit.customer.name, phone: cockpit.customer.phone ?? '', address: rowToEngineJob(cockpit).address } : undefined}
+          technician={cockpit.technician ? { name: cockpit.technician.name, phone: '' } : null}
+          onClose={() => setCockpit(null)}
+        />
+      )}
     </div>
   )
 }

@@ -8,7 +8,7 @@ import { Lock, Loader2, AlertCircle } from 'lucide-react'
 function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirectTo = searchParams.get('redirectTo') || '/dashboard'
+  const redirectTo = searchParams.get('redirectTo') || '/command'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -41,7 +41,7 @@ function LoginForm() {
       setError('Demo account not set up. See README for setup instructions.')
       setLoading(false)
     } else {
-      router.push('/dashboard')
+      router.push('/command')
       router.refresh()
     }
   }

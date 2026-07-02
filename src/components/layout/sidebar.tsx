@@ -7,12 +7,13 @@ import {
   LayoutDashboard, Radio, Calendar, Briefcase, Users, Wrench,
   CreditCard, ShieldCheck, BarChart3, FileText, TrendingUp,
   Bot, Settings, Shield, PhoneCall, KanbanSquare, UserPlus,
-  FileSignature, ShoppingCart, GraduationCap, ClipboardList
+  FileSignature, ShoppingCart, GraduationCap, ClipboardList, Gauge
 } from 'lucide-react'
 
 const navSections: { label?: string; items: { href: string; label: string; icon: React.ElementType }[] }[] = [
   {
     items: [
+      { href: '/command', label: 'Command Center', icon: Gauge },
       { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
       { href: '/ai-receptionist', label: 'AI Receptionist', icon: PhoneCall },
     ],
@@ -68,7 +69,7 @@ export function Sidebar() {
   return (
     <div className="w-56 bg-gray-950 border-r border-gray-800 flex flex-col h-screen fixed left-0 top-0 z-30">
       <div className="px-4 py-4 border-b border-gray-800">
-        <Link href="/dashboard" className="flex items-center gap-2.5">
+        <Link href="/command" className="flex items-center gap-2.5">
           <div className="w-7 h-7 bg-amber-500 rounded flex items-center justify-center flex-shrink-0">
             <Shield className="w-4 h-4 text-gray-950" />
           </div>
