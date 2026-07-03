@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Header } from '@/components/layout/header'
 import { executeWorkflow, askTitan } from '@/app/actions/agent'
+import { IntelligencePanel } from '@/components/intelligence/intelligence-panel'
 import type { AgentRunResult } from '@/lib/agent/types'
 import { Search, Globe, Users, Package, Building2, Loader2, ArrowRight, Wrench, Save } from 'lucide-react'
 
@@ -54,6 +55,14 @@ export default function ResearchPage() {
         }
       />
       <div className="flex-1 overflow-y-auto p-6 space-y-5 max-w-3xl w-full mx-auto">
+        <IntelligencePanel
+          workflowId="competitor"
+          label="Deep competitor analysis"
+          description="Exa finds them, Firecrawl reads their site, Titan synthesizes the gaps you can exploit."
+          inputPlaceholder='Competitor URL or query, e.g. "locksmith Houston"'
+          inputKey="query"
+          savable
+        />
         <div className="flex items-center gap-1.5 flex-wrap">
           {MODES.map(m => {
             const Icon = m.icon

@@ -5,6 +5,7 @@ import { Header } from '@/components/layout/header'
 import { getJobs } from '@/lib/actions/jobs'
 import { getTechnicians } from '@/lib/actions/technicians'
 import { getExpenses } from '@/lib/actions/expenses'
+import { IntelligencePanel } from '@/components/intelligence/intelligence-panel'
 import { formatCurrency } from '@/lib/utils'
 import { FileText, TrendingUp, AlertTriangle, CheckCircle2, DollarSign, Briefcase, Users, ShieldCheck, Loader2 } from 'lucide-react'
 import type { Technician, Expense } from '@/types/database'
@@ -99,6 +100,12 @@ export default function CEOPacketPage() {
         }
       />
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        <IntelligencePanel
+          workflowId="ceo-packet"
+          label="Generate this month's CEO packet"
+          description="Titan compiles revenue, technicians, cash risk, pipeline, and valuation into an executive brief you can save to memory."
+          savable
+        />
         {loading ? (
           <div className="flex items-center justify-center py-24">
             <Loader2 className="w-6 h-6 animate-spin text-gray-600" />

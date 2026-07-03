@@ -8,6 +8,35 @@ import type { ToolRun } from './types'
 
 const DEMO_COMPANY_ID = 'a1b2c3d4-0000-0000-0000-000000000001'
 
+/** Best-effort: persist a question/answer exchange into agent_sessions +
+ *  agent_messages. Silent no-op in demo mode — never blocks the answer. */
+export async function logAgentExchange(question: string, answer: string, toolCalls?: unknown): Promise<void> {
+  const configured = !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY)
+  if (!configured) return
+  try {
+    const { createClient } = await import('@supabase/supabase-js')
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    )
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: session } = await (supabase as any)
+      .from('agent_sessions')
+      .insert({ company_id: DEMO_COMPANY_ID, title: question.slice(0, 120), status: 'complete' })
+      .select('id')
+      .single()
+    if (!session?.id) return
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any).from('agent_messages').insert([
+      { session_id: session.id, company_id: DEMO_COMPANY_ID, role: 'user', content: question },
+      { session_id: session.id, company_id: DEMO_COMPANY_ID, role: 'assistant', content: answer.slice(0, 8000), tool_calls: toolCalls ?? null },
+    ])
+  } catch {
+    // best-effort only
+  }
+}
+
 export async function logToolRun(run: ToolRun, meta?: { input?: unknown; userId?: string }): Promise<void> {
   const configured = !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY)
   if (!configured) return

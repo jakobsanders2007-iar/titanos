@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Header } from '@/components/layout/header'
 import { DEMO_WHY, type WhyAnalysis } from '@/lib/demo-intelligence'
+import { IntelligencePanel } from '@/components/intelligence/intelligence-panel'
 import { formatCurrency } from '@/lib/utils'
 import { HelpCircle, ArrowRight, TrendingUp, TrendingDown } from 'lucide-react'
 
@@ -23,6 +24,12 @@ export default function WhyAnalysisPage() {
         subtitle="The Why Brain — every metric change, explained with contributing factors and a root cause"
       />
       <div className="flex-1 overflow-y-auto p-6 space-y-3">
+        <IntelligencePanel
+          workflowId="why-revenue"
+          label="Run a live Why analysis"
+          description="Titan inspects revenue, jobs, technicians, unpaid work, and CRM — then explains the change with confidence and limitations."
+          savable
+        />
         {DEMO_WHY.map(w => {
           const isOpen = expanded === w.id
           const maxAbs = Math.max(...w.factors.map(f => Math.abs(f.impact)))

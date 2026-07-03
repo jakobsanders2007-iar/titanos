@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Header } from '@/components/layout/header'
 import { DEMO_MEMORY, type MemoryCategory } from '@/lib/demo-intelligence'
+import { IntelligencePanel } from '@/components/intelligence/intelligence-panel'
 import { formatDate } from '@/lib/utils'
 import { Search, Brain, FileText, Target, LineChart, User, ShieldAlert } from 'lucide-react'
 
@@ -62,6 +63,14 @@ export default function CompanyMemoryPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-6">
+          <div className="mb-4">
+            <IntelligencePanel
+              workflowId="memory-search"
+              label="Ask Business Memory"
+              description="Why did we do this? Titan searches company history and cites the events behind the answer."
+              inputPlaceholder='e.g. "Why did we raise the smart lock price?"'
+            />
+          </div>
           <div className="space-y-2">
             {filtered.map(item => {
               const meta = CATEGORY_META[item.category]

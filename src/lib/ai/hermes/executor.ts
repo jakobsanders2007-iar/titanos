@@ -3,7 +3,7 @@ import { hermesChat, hermesConfigured } from './client'
 import { getHermesTool, hermesToolSchemas } from './tools'
 import { HERMES_SYSTEM_PROMPT, WORKFLOW_PROMPTS } from './prompts'
 import { getWorkflowDef, type ToolOutput } from './workflows'
-import { logToolRun } from '@/lib/agent/log'
+import { logToolRun, logAgentExchange } from '@/lib/agent/log'
 import type { ChatMessage, IntelligenceReport, ToolTimelineEntry } from './types'
 
 // The Hermes executor. Two entry points:
@@ -66,6 +66,7 @@ export async function runHermesWorkflow(id: string, input: Record<string, unknow
 
   // 2. Deterministic synthesis — always available.
   const fallback = def.synthesize(results, input)
+  await logAgentExchange(def.question, fallback.narrative, timeline)
 
   // 3. If a Hermes gateway is live, let it write the narrative from the same evidence.
   if (hermesConfigured()) {
@@ -130,6 +131,7 @@ export async function askHermesAgentic(question: string): Promise<IntelligenceRe
     const reply = await hermesChat(messages, { tools })
     if (reply.toolCalls.length === 0) {
       const parsed = parseHermesJson(reply.content)
+      await logAgentExchange(question, parsed?.narrative ?? reply.content, timeline)
       return {
         workflowId: 'freeform',
         title: 'Titan Intelligence',

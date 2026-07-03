@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Header } from '@/components/layout/header'
 import { StatCard } from '@/components/ui/stat-card'
 import { DEMO_SHOPPER_ITEMS, type ShopperItem } from '@/lib/demo-extended'
+import { IntelligencePanel } from '@/components/intelligence/intelligence-panel'
 import { formatCurrency } from '@/lib/utils'
 import { ShoppingCart, Sparkles, Trash2, Plus, Minus, PackageCheck } from 'lucide-react'
 
@@ -49,6 +50,11 @@ export default function AIShopperPage() {
         }
       />
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <IntelligencePanel
+          workflowId="shopper"
+          label="Ask Titan what to buy"
+          description="Titan reads job history, upcoming work, and technician notes — every recommendation comes with its reason. Cart requires your approval."
+        />
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <StatCard title="Recommendations" value={items.length} format="number" />

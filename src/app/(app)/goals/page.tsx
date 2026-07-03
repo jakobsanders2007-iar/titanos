@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Header } from '@/components/layout/header'
 import { DEMO_GOALS, type Goal, type GoalType } from '@/lib/demo-intelligence'
+import { IntelligencePanel } from '@/components/intelligence/intelligence-panel'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import {
   Target, CheckCircle2, Circle, AlertTriangle, ListChecks, Calendar, X, Plus,
@@ -35,6 +36,14 @@ export default function GoalsPage() {
         }
       />
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <IntelligencePanel
+          workflowId="goal-plan"
+          label="Generate an operating plan"
+          description="Type a goal — Titan assesses current state and builds milestones, KPIs, weekly actions, and risks tied to valuation."
+          inputPlaceholder='e.g. "Sell for $5M" or "Reach $100k/month"'
+          inputKey="goal"
+          savable
+        />
 
         <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 flex items-center gap-4">
           <div className="w-12 h-12 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center flex-shrink-0">

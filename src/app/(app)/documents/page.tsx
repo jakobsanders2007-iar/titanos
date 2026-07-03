@@ -6,6 +6,7 @@ import { Header } from '@/components/layout/header'
 import { StatCard } from '@/components/ui/stat-card'
 import { DEMO_DOCUMENTS, type DocumentType } from '@/lib/demo-intelligence'
 import { analyzeDocumentText } from '@/app/actions/agent'
+import { IntelligencePanel } from '@/components/intelligence/intelligence-panel'
 import { formatDate } from '@/lib/utils'
 import {
   FileText, Receipt, ShieldCheck, Key, LineChart, Scale, Upload, Loader2,
@@ -47,6 +48,14 @@ export default function DocumentsPage() {
         subtitle="Every contract, filing, and statement Titan has read and indexed into Company Memory"
       />
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <IntelligencePanel
+          workflowId="document"
+          label="Titan reads it like an analyst"
+          description="Paste document or 10-K text — Titan extracts risks, opportunities, and what it means for your business, then files it to memory."
+          inputPlaceholder="Paste document text (or leave blank for the sample annual summary)"
+          inputKey="text"
+          savable
+        />
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <StatCard title="Documents" value={DEMO_DOCUMENTS.length} format="number" />
