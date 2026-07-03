@@ -64,6 +64,9 @@ export interface JobFlow {
     laborCost: number
     grossProfit: number
     margin: number
+    /** 0–100 composite of margin, ticket size vs playbook norm, and payment cleanliness. */
+    score: number
+    explanation: string
   }
   valuation: {
     valueContribution: number
@@ -75,6 +78,40 @@ export interface JobFlow {
 }
 
 const LABOR_LOADED_RATE = 55 // $/hr fully-loaded technician cost proxy
+
+/** Job Profit Score: 0–100 composite of margin quality (60 pts), gross-profit
+ *  dollars (25 pts), and payment cleanliness (15 pts) — with a plain-English
+ *  explanation the owner can act on. */
+function scoreProfit(
+  job: EngineJob,
+  p: { revenue: number; partsCost: number; laborCost: number; grossProfit: number; margin: number }
+): { score: number; explanation: string } {
+  if (p.revenue <= 0) return { score: 0, explanation: 'No price on this job yet — score available once it is quoted or completed.' }
+
+  // Margin quality: 70%+ margin = full 60 points, scales linearly below.
+  const marginPts = Math.max(0, Math.min(60, (p.margin / 70) * 60))
+  // Profit dollars: $250+ gross = full 25 points.
+  const dollarPts = Math.max(0, Math.min(25, (p.grossProfit / 250) * 25))
+  // Payment cleanliness: paid + verified = 15, cash pending = 5, unpaid = 0.
+  const paid = job.payment_status === 'Paid'
+  const cashPending = job.cash_verification_status === 'pending'
+  const cleanPts = paid && !cashPending ? 15 : cashPending ? 5 : job.amount_collected > 0 ? 8 : 0
+
+  const score = Math.round(marginPts + dollarPts + cleanPts)
+
+  const reasons: string[] = []
+  if (p.margin >= 60) reasons.push('strong margin')
+  else if (p.margin >= 40) reasons.push('acceptable margin')
+  else reasons.push(`thin margin (${p.margin.toFixed(0)}%)`)
+  if (p.partsCost === 0) reasons.push('no parts cost')
+  else if (p.partsCost / p.revenue > 0.3) reasons.push('heavy parts cost eating profit')
+  if (paid && !cashPending) reasons.push('payment fully settled')
+  else if (cashPending) reasons.push('cash still unverified')
+  else if (job.amount_collected === 0 && job.status === 'Completed') reasons.push('payment not collected')
+
+  const verdict = score >= 75 ? 'This was a good job to take' : score >= 50 ? 'Solid but improvable' : 'This job type needs pricing or process attention'
+  return { score, explanation: `${verdict}: ${reasons.join(', ')}.` }
+}
 
 function statusToStageIndex(job: EngineJob): number {
   switch (job.status) {
@@ -194,7 +231,8 @@ export function computeJobFlow(job: EngineJob): JobFlow {
   const partsCost = job.parts_cost || 0
   const grossProfit = revenue - partsCost - laborCost
   const margin = revenue > 0 ? (grossProfit / revenue) * 100 : 0
-  const profit = { revenue, partsCost, laborCost, grossProfit, margin }
+  const { score, explanation } = scoreProfit(job, { revenue, partsCost, laborCost, grossProfit, margin })
+  const profit = { revenue, partsCost, laborCost, grossProfit, margin, score, explanation }
 
   const risks = buildRisks(job, profit)
   const nextAction = buildNextAction(job)

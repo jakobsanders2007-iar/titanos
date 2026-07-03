@@ -35,8 +35,10 @@ export function JobCockpit({
     Object.fromEntries(flow.mustCollect.map((c, i) => [i, c.done]))
   )
 
+  const [closed, setClosed] = useState(false)
   const collectedCount = Object.values(collect).filter(Boolean).length
   const criticalOutstanding = flow.mustCollect.filter((c, i) => c.critical && !collect[i]).length
+  const canClose = criticalOutstanding === 0
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end" onClick={onClose}>
@@ -234,17 +236,31 @@ export function JobCockpit({
 
           {/* Profit */}
           <Panel icon={DollarSign} title="Job profitability">
-            <div className="grid grid-cols-4 gap-2 mb-3">
-              <Metric label="Revenue" value={formatCurrency(flow.profit.revenue)} />
-              <Metric label="Parts" value={`-${formatCurrency(flow.profit.partsCost)}`} muted />
-              <Metric label="Labor est." value={`-${formatCurrency(flow.profit.laborCost)}`} muted />
-              <Metric label="Gross profit" value={formatCurrency(flow.profit.grossProfit)} accent />
+            <div className="flex items-start gap-4 mb-3">
+              {/* Profit Score dial */}
+              <div className="flex flex-col items-center flex-shrink-0">
+                <div className={`w-16 h-16 rounded-full border-4 flex items-center justify-center ${
+                  flow.profit.score >= 75 ? 'border-emerald-500/60' : flow.profit.score >= 50 ? 'border-amber-500/60' : 'border-red-500/60'
+                }`}>
+                  <span className={`text-lg font-bold tabular-nums ${
+                    flow.profit.score >= 75 ? 'text-emerald-400' : flow.profit.score >= 50 ? 'text-amber-400' : 'text-red-400'
+                  }`}>{flow.profit.score}</span>
+                </div>
+                <span className="text-[10px] text-gray-600 uppercase tracking-wide mt-1">Profit Score</span>
+              </div>
+              <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-2">
+                <Metric label="Revenue" value={formatCurrency(flow.profit.revenue)} />
+                <Metric label="Parts" value={`-${formatCurrency(flow.profit.partsCost)}`} muted />
+                <Metric label="Labor est." value={`-${formatCurrency(flow.profit.laborCost)}`} muted />
+                <Metric label="Gross profit" value={formatCurrency(flow.profit.grossProfit)} accent />
+              </div>
             </div>
             <div className="h-1.5 rounded-full bg-gray-800 overflow-hidden">
               <div className={`h-full rounded-full ${flow.profit.margin >= 50 ? 'bg-emerald-500' : flow.profit.margin >= 40 ? 'bg-amber-500' : 'bg-red-500'}`}
                 style={{ width: `${Math.max(0, Math.min(100, flow.profit.margin))}%` }} />
             </div>
             <div className="text-xs text-gray-500 mt-1">{flow.profit.margin.toFixed(0)}% gross margin</div>
+            <div className="text-xs text-gray-400 mt-2 bg-gray-950/60 border border-gray-800 rounded px-3 py-2">{flow.profit.explanation}</div>
           </Panel>
 
           {/* Valuation impact */}
@@ -268,6 +284,32 @@ export function JobCockpit({
               </div>
             </Panel>
           )}
+
+          {/* Closeout enforcement — the job cannot close with required items open */}
+          <div className="sticky bottom-0 -mx-6 px-6 py-3 bg-gray-950/95 backdrop-blur border-t border-gray-800">
+            {closed ? (
+              <div className="flex items-center gap-2 text-sm text-emerald-400 py-2">
+                <Check className="w-4 h-4" />Job closed out — payment, verification, and documentation complete.
+              </div>
+            ) : (
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => canClose && setClosed(true)}
+                  disabled={!canClose}
+                  className={`flex-1 py-2.5 rounded text-sm font-semibold transition-colors ${
+                    canClose
+                      ? 'bg-emerald-500 hover:bg-emerald-400 text-gray-950'
+                      : 'bg-gray-800 text-gray-500 cursor-not-allowed border border-gray-700'
+                  }`}
+                >
+                  {canClose ? 'Close out job' : `Closeout blocked — ${criticalOutstanding} required item${criticalOutstanding !== 1 ? 's' : ''} outstanding`}
+                </button>
+              </div>
+            )}
+            {!closed && !canClose && (
+              <div className="text-[10px] text-gray-600 mt-1.5">Titan will not close a job until payment, cash verification, and customer sign-off are recorded. This is how leakage stops.</div>
+            )}
+          </div>
         </div>
       </div>
     </div>

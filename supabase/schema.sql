@@ -899,3 +899,272 @@ begin
     execute format('create policy "company delete %1$s" on %1$I for delete using (company_id = my_company_id())', t);
   end loop;
 end $$;
+
+-- ============================================================================
+-- TITAN INTELLIGENCE OS — canonical model, memory, goals, risk, closeouts
+-- ============================================================================
+
+create table if not exists company_members (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  profile_id uuid not null references profiles(id) on delete cascade,
+  role text not null default 'member',
+  created_at timestamptz not null default now(),
+  unique (company_id, profile_id)
+);
+
+create table if not exists employees (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  name text not null,
+  role text,
+  email text,
+  phone text,
+  active boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create trigger employees_updated_at before update on employees
+  for each row execute function set_updated_at();
+
+-- Source-system registry (Connected Mode). Titan Native is just another row.
+create table if not exists connectors (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  name text not null,           -- jobber/servicetitan/toast/titan_native/...
+  category text,
+  mode text not null default 'connected', -- connected | native
+  status text not null default 'available',
+  records_synced int not null default 0,
+  last_synced_at timestamptz,
+  metadata jsonb default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (company_id, name)
+);
+create trigger connectors_updated_at before update on connectors
+  for each row execute function set_updated_at();
+
+-- Canonical event stream: every fact from every connector normalizes here.
+create table if not exists business_events (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  connector_id uuid references connectors(id) on delete set null,
+  source text not null default 'titan_native',
+  event_type text not null, -- job/payment/call/email/document/decision/...
+  occurred_at timestamptz not null default now(),
+  title text not null,
+  detail text,
+  amount numeric(12,2),
+  entity_type text,
+  entity_id uuid,
+  impact text default 'neutral', -- positive/negative/neutral
+  metadata jsonb default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+create index if not exists business_events_company_time_idx on business_events (company_id, occurred_at desc);
+create index if not exists business_events_type_idx on business_events (company_id, event_type);
+
+-- Long-term memory items: decisions, documents, KPI snapshots, mistakes.
+create table if not exists business_memory (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  category text not null, -- decision/document/goal/kpi_snapshot/people/risk/mistake
+  title text not null,
+  summary text,
+  source text,
+  tags text[] default '{}',
+  embedding_ref text,       -- pointer for future vector search
+  occurred_at timestamptz not null default now(),
+  created_at timestamptz not null default now()
+);
+create index if not exists business_memory_company_idx on business_memory (company_id, occurred_at desc);
+
+create table if not exists goals (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  goal_type text not null, -- revenue/ebitda/valuation/expansion/cash_flow/owner_freedom/hiring
+  title text not null,
+  current_value numeric(14,2) default 0,
+  target_value numeric(14,2) not null,
+  unit text default 'currency',
+  target_date date,
+  status text not null default 'active',
+  latest_impact text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create trigger goals_updated_at before update on goals
+  for each row execute function set_updated_at();
+
+create table if not exists goal_milestones (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  goal_id uuid not null references goals(id) on delete cascade,
+  label text not null,
+  done boolean not null default false,
+  sort_order int default 0,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists action_items (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  goal_id uuid references goals(id) on delete set null,
+  category text not null default 'Ops',
+  title text not null,
+  rationale text,
+  impact_estimate numeric(12,2),
+  effort text default 'Low',
+  owner_label text,
+  status text not null default 'To Do',
+  due_date date,
+  why_analysis_id uuid,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create trigger action_items_updated_at before update on action_items
+  for each row execute function set_updated_at();
+
+create table if not exists why_analyses (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  question text not null,
+  headline text,
+  unit text default 'currency',
+  factors jsonb default '[]'::jsonb,
+  root_cause text,
+  recommendation text,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists risk_flags (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  category text not null,
+  severity text not null default 'medium', -- critical/high/medium
+  title text not null,
+  detail text,
+  exposure numeric(12,2),
+  status text not null default 'open', -- open/acknowledged/resolved
+  detected_at timestamptz not null default now(),
+  resolved_at timestamptz,
+  href text,
+  created_at timestamptz not null default now()
+);
+create index if not exists risk_flags_company_idx on risk_flags (company_id, status, severity);
+
+-- Per-service operating playbooks (mirrors src/lib/job-playbooks.ts for DB-driven verticals)
+create table if not exists job_playbooks (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid references companies(id) on delete cascade, -- null = global
+  service_type text not null,
+  vertical text not null default 'Locksmith',
+  labor_minutes int default 45,
+  diagnosis jsonb default '[]'::jsonb,
+  tools jsonb default '[]'::jsonb,
+  parts jsonb default '[]'::jsonb,
+  checklist jsonb default '[]'::jsonb,
+  closeout jsonb default '[]'::jsonb,
+  upsell text,
+  follow_up_days int default 3,
+  follow_up_action text,
+  created_at timestamptz not null default now()
+);
+
+-- Closeout enforcement record: a job cannot close without one of these rows complete.
+create table if not exists job_closeouts (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  job_id uuid not null references jobs(id) on delete cascade,
+  final_price numeric(10,2),
+  payment_method text,
+  amount_collected numeric(10,2),
+  notes text,
+  parts_used jsonb default '[]'::jsonb,
+  photos jsonb default '[]'::jsonb,
+  customer_followup_status text,
+  review_request_sent boolean not null default false,
+  cash_verification_triggered boolean not null default false,
+  profit_score int,
+  profit_explanation text,
+  completed_by uuid references profiles(id) on delete set null,
+  closed_at timestamptz not null default now(),
+  unique (job_id)
+);
+
+create table if not exists financial_snapshots (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  period_start date not null,
+  period_end date not null,
+  revenue numeric(14,2) default 0,
+  expenses numeric(14,2) default 0,
+  gross_profit numeric(14,2) default 0,
+  ebitda_estimate numeric(14,2) default 0,
+  cash_days numeric(6,1),
+  metadata jsonb default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists documents (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  name text not null,
+  doc_type text,
+  source_url text,
+  storage_path text,
+  status text not null default 'processing', -- processing/processed/failed
+  insights_count int default 0,
+  summary text,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists reports (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  report_type text not null,
+  period_start date,
+  period_end date,
+  payload jsonb default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+-- RLS
+alter table company_members enable row level security;
+alter table employees enable row level security;
+alter table connectors enable row level security;
+alter table business_events enable row level security;
+alter table business_memory enable row level security;
+alter table goals enable row level security;
+alter table goal_milestones enable row level security;
+alter table action_items enable row level security;
+alter table why_analyses enable row level security;
+alter table risk_flags enable row level security;
+alter table job_closeouts enable row level security;
+alter table financial_snapshots enable row level security;
+alter table documents enable row level security;
+alter table reports enable row level security;
+alter table job_playbooks enable row level security;
+
+do $$
+declare t text;
+begin
+  foreach t in array array[
+    'company_members','employees','connectors','business_events','business_memory',
+    'goals','goal_milestones','action_items','why_analyses','risk_flags',
+    'job_closeouts','financial_snapshots','documents','reports'
+  ]
+  loop
+    execute format('create policy "company select %1$s" on %1$I for select using (company_id = my_company_id())', t);
+    execute format('create policy "company insert %1$s" on %1$I for insert with check (company_id = my_company_id())', t);
+    execute format('create policy "company update %1$s" on %1$I for update using (company_id = my_company_id())', t);
+    execute format('create policy "company delete %1$s" on %1$I for delete using (company_id = my_company_id())', t);
+  end loop;
+end $$;
+
+-- job_playbooks: global rows (company_id null) readable by all authed users
+create policy "read global or company playbooks" on job_playbooks
+  for select using (company_id is null or company_id = my_company_id());
+create policy "manage company playbooks" on job_playbooks
+  for all using (company_id = my_company_id()) with check (company_id = my_company_id());

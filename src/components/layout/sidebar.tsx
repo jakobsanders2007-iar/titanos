@@ -11,28 +11,31 @@ import {
   FileSignature, ShoppingCart, GraduationCap, ClipboardList, Gauge,
   MessageSquare, HelpCircle, Target, ListChecks, History, FileStack,
   Building2, Plug, ChevronDown, Activity, Sparkles, Search, Mic, Send,
+  ShieldAlert,
 } from 'lucide-react'
 
 type NavItem = { href: string; label: string; icon: React.ElementType }
 type NavSection = { label?: string; items: NavItem[]; collapsible?: boolean }
 
-// Titan Intelligence OS — the five brains that sit above every vertical
+// Titan Intelligence OS — the brains that sit above every vertical
 const intelligenceSections: NavSection[] = [
   {
     items: [
       { href: '/command', label: 'Command Center', icon: Gauge },
+      { href: '/live-ops', label: 'Live Ops Feed', icon: Activity },
       { href: '/command-center', label: 'Titan Agent', icon: Sparkles },
-      { href: '/executive-chat', label: 'Executive Chat', icon: MessageSquare },
+      { href: '/connect-business', label: 'Connect Your Business', icon: Plug },
     ],
   },
   {
     label: 'Brains',
     items: [
+      { href: '/memory', label: 'Business Memory', icon: Brain },
       { href: '/why', label: 'Why Analysis', icon: HelpCircle },
       { href: '/goals', label: 'Goals', icon: Target },
       { href: '/action-plan', label: 'Action Plan', icon: ListChecks },
-      { href: '/memory', label: 'Company Memory', icon: Brain },
-      { href: '/connectors', label: 'Connectors', icon: Plug },
+      { href: '/risk-radar', label: 'Risk Radar', icon: ShieldAlert },
+      { href: '/replay', label: 'Business Replay', icon: History },
     ],
   },
   {
@@ -41,14 +44,16 @@ const intelligenceSections: NavSection[] = [
       { href: '/research', label: 'Research', icon: Search },
       { href: '/voice', label: 'Voice', icon: Mic },
       { href: '/messaging', label: 'Messaging', icon: Send },
+      { href: '/executive-chat', label: 'Executive Chat', icon: MessageSquare },
     ],
   },
   {
     label: 'Knowledge',
     items: [
+      { href: '/connectors', label: 'Connectors', icon: Plug },
       { href: '/timeline', label: 'Business Timeline', icon: History },
       { href: '/documents', label: 'Documents', icon: FileText },
-      { href: '/filings', label: 'Filing Reader', icon: FileStack },
+      { href: '/filings', label: '10-K / Filing Reader', icon: FileStack },
       { href: '/industry-brain', label: 'Industry Brain', icon: Building2 },
     ],
   },
@@ -162,7 +167,7 @@ export function Sidebar() {
 
       <div className="px-4 py-3 border-t border-gray-800">
         <div className="text-xs text-gray-400 font-medium">Titan Intelligence Demo</div>
-        <div className="text-xs text-gray-600 mt-0.5">Field Service vertical active · Owner</div>
+        <div className="text-xs text-gray-600 mt-0.5">Connected Mode · Locksmith · Owner</div>
       </div>
     </div>
   )

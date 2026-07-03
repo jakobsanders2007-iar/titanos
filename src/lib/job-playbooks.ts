@@ -229,6 +229,111 @@ export const HVAC_DEFAULT: Playbook = {
   upsell: 'Offer annual maintenance plan',
 }
 
+// Named HVAC playbooks — the same engine drives both verticals.
+export const HVAC_PLAYBOOKS: Record<string, Playbook> = {
+  'AC Not Cooling': {
+    ...HVAC_DEFAULT,
+    laborMinutes: 75,
+    diagnosis: [
+      'Check thermostat settings and batteries first — ask the customer over the phone',
+      'Confirm breaker has not tripped and filter is not clogged',
+      'System age and brand — units 8+ years old get a maintenance-plan pitch',
+    ],
+    tools: ['Gauges', 'Multimeter', 'Capacitor assortment', 'Contactor spares', 'Filters', 'Leak detector'],
+    parts: [
+      { name: 'Run capacitor', typicalCost: 20, likely: true },
+      { name: 'Contactor', typicalCost: 17, likely: false },
+      { name: 'Refrigerant charge', typicalCost: 60, likely: false },
+    ],
+    checklist: [
+      'Verify symptom and thermostat operation with customer present',
+      'Capture model/serial nameplate photo before touching the unit',
+      'Test capacitor, contactor, and refrigerant pressures in order',
+      'Confirm cooling restored and log temperature split',
+    ],
+    upsell: 'Units 8+ years old: pitch the annual maintenance plan before leaving',
+  },
+  'AC Emergency': {
+    ...HVAC_DEFAULT,
+    laborMinutes: 90,
+    diagnosis: [
+      'Heat-advisory or vulnerable occupant? → priority dispatch',
+      'Confirm after-hours rate accepted before rolling the truck',
+      'System age, brand, and last service date',
+    ],
+    tools: ['Gauges', 'Multimeter', 'Capacitor assortment', 'Portable fan (customer comfort)', 'Refrigerant'],
+    parts: [
+      { name: 'Run capacitor', typicalCost: 20, likely: true },
+      { name: 'Emergency repair parts', typicalCost: 45, likely: true },
+    ],
+    followUpDays: 2,
+    followUpAction: 'Post-emergency check-in + maintenance plan offer',
+    upsell: 'Convert the emergency into a maintenance plan — highest-conversion moment',
+  },
+  'Furnace Tune-Up': {
+    ...HVAC_DEFAULT,
+    laborMinutes: 60,
+    diagnosis: [
+      'Confirm furnace type (gas/electric/heat pump) and access location',
+      'Any symptoms beyond routine maintenance?',
+      'On a maintenance plan already, or a candidate for one?',
+    ],
+    tools: ['Combustion analyzer', 'Multimeter', 'Filters', 'Brush kit', 'CO detector'],
+    parts: [
+      { name: 'Filter', typicalCost: 12, likely: true },
+      { name: 'Igniter / flame sensor', typicalCost: 28, likely: false },
+    ],
+    upsell: 'Enroll in the maintenance plan — tune-up fee credits toward it',
+  },
+  'Thermostat Install': {
+    ...HVAC_DEFAULT,
+    laborMinutes: 60,
+    diagnosis: [
+      'Confirm thermostat model and whether customer supplies it',
+      'C-wire present? Verify system compatibility before dispatch',
+      'Wi-Fi credentials available for smart-stat setup',
+    ],
+    tools: ['Multimeter', 'Wire labels', 'Drill', 'Phone for app setup'],
+    parts: [
+      { name: 'Smart thermostat', typicalCost: 219, likely: false },
+      { name: 'C-wire adapter', typicalCost: 25, likely: true },
+    ],
+    upsell: 'Offer a whole-home airflow assessment while on site',
+  },
+  'Heater Not Working': {
+    ...HVAC_DEFAULT,
+    laborMinutes: 75,
+    diagnosis: [
+      'Gas smell? → safety escalation, advise customer immediately',
+      'Check thermostat mode and breaker over the phone first',
+      'Capture system age — heat exchangers 15+ years get inspection',
+    ],
+    tools: ['Combustion analyzer', 'Multimeter', 'Igniter spares', 'CO detector'],
+    parts: [
+      { name: 'Hot surface igniter', typicalCost: 28, likely: true },
+      { name: 'Flame sensor', typicalCost: 15, likely: true },
+    ],
+    upsell: 'Old heat exchanger: quote replacement with financing placeholder',
+  },
+  'Maintenance Visit': {
+    ...HVAC_DEFAULT,
+    laborMinutes: 45,
+    diagnosis: [
+      'Pull equipment history and last visit notes before arrival',
+      'Confirm plan coverage — no payment collection needed if covered',
+      'Check for open recommendations from previous visits',
+    ],
+    tools: ['Gauges', 'Filters (customer sizes from equipment record)', 'Coil cleaner', 'Multimeter'],
+    parts: [
+      { name: 'Filter', typicalCost: 12, likely: true },
+      { name: 'Condensate tabs', typicalCost: 6, likely: true },
+    ],
+    followUpDays: 180,
+    followUpAction: 'Schedule next seasonal visit automatically',
+    upsell: 'Log aging components now — plan the replacement conversation early',
+  },
+}
+
 export function getPlaybook(serviceType: string): Playbook {
-  return PLAYBOOKS[serviceType] || LOCKSMITH_DEFAULT
+  return PLAYBOOKS[serviceType] || HVAC_PLAYBOOKS[serviceType] || LOCKSMITH_DEFAULT
 }

@@ -36,6 +36,8 @@ export const DEMO_CONNECTORS: Connector[] = [
   { id: 'con-jobber', name: 'Jobber', category: 'Field Service & CRM', status: 'available', description: 'Import jobs, clients, and quotes from Jobber.', lastSynced: null, recordsSynced: 0 },
   { id: 'con-hcp', name: 'Housecall Pro', category: 'Field Service & CRM', status: 'available', description: 'Sync dispatch, invoices, and customer history.', lastSynced: null, recordsSynced: 0 },
   { id: 'con-servicetitan', name: 'ServiceTitan', category: 'Field Service & CRM', status: 'available', description: 'Enterprise field service data — jobs, techs, pricebook.', lastSynced: null, recordsSynced: 0 },
+  { id: 'con-fieldedge', name: 'FieldEdge', category: 'Field Service & CRM', status: 'available', description: 'HVAC-focused field service — work orders, agreements, dispatch.', lastSynced: null, recordsSynced: 0 },
+  { id: 'con-titan-native', name: 'Titan Native', category: 'Field Service & CRM', status: 'connected', description: 'Titan\'s hosted operating system — internally just another connector.', lastSynced: daysAgo(0, 7, 0), recordsSynced: 486 },
   { id: 'con-toast', name: 'Toast', category: 'Point of Sale', status: 'available', description: 'Restaurant POS — sales, labor, and menu performance.', lastSynced: null, recordsSynced: 0 },
   { id: 'con-square', name: 'Square', category: 'Point of Sale', status: 'connected', description: 'Point-of-sale transactions and card processing.', lastSynced: daysAgo(0, 6, 15), recordsSynced: 1284 },
   { id: 'con-ncr', name: 'NCR', category: 'Point of Sale', status: 'available', description: 'Enterprise retail and restaurant POS systems.', lastSynced: null, recordsSynced: 0 },
@@ -44,6 +46,7 @@ export const DEMO_CONNECTORS: Connector[] = [
   { id: 'con-gmail', name: 'Gmail', category: 'Calendar & Email', status: 'connected', description: 'Reads customer emails, quotes, and vendor correspondence.', lastSynced: daysAgo(0, 6, 50), recordsSynced: 2140 },
   { id: 'con-gcal', name: 'Google Calendar', category: 'Calendar & Email', status: 'connected', description: 'Schedules, appointments, and owner availability.', lastSynced: daysAgo(0, 6, 55), recordsSynced: 412 },
   { id: 'con-gdrive', name: 'Google Drive', category: 'Documents & Filings', status: 'syncing', description: 'Contracts, spreadsheets, and shared business documents.', lastSynced: daysAgo(0, 4, 10), recordsSynced: 76 },
+  { id: 'con-excel', name: 'Excel / CSV', category: 'Documents & Filings', status: 'connected', description: 'Drop any spreadsheet — Titan maps columns into the canonical model.', lastSynced: daysAgo(2, 9, 30), recordsSynced: 1150 },
   { id: 'con-pdf', name: 'PDF Uploads', category: 'Documents & Filings', status: 'connected', description: 'Drag-and-drop any document — Titan reads and indexes it.', lastSynced: daysAgo(1, 14, 0), recordsSynced: 14 },
   { id: 'con-secfilings', name: 'SEC / 10-K Document Upload', category: 'Documents & Filings', status: 'available', description: 'Upload public filings for competitor and industry analysis.', lastSynced: null, recordsSynced: 0 },
 ]
