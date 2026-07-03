@@ -751,3 +751,151 @@ create policy "read global or company lessons" on training_lessons
   for select using (company_id is null or company_id = my_company_id());
 create policy "manage company lessons" on training_lessons
   for all using (company_id = my_company_id()) with check (company_id = my_company_id());
+
+-- ============================================================================
+-- TITAN AGENT + INTEGRATION LAYER
+-- ============================================================================
+
+create table if not exists integration_connections (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  provider text not null,
+  status text not null default 'missing_key', -- ready/mock/missing_key/error/disabled
+  last_checked_at timestamptz,
+  error_message text,
+  metadata jsonb default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (company_id, provider)
+);
+create trigger integration_connections_updated_at before update on integration_connections
+  for each row execute function set_updated_at();
+
+create table if not exists agent_sessions (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  user_id uuid references profiles(id) on delete set null,
+  title text,
+  status text not null default 'active',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create trigger agent_sessions_updated_at before update on agent_sessions
+  for each row execute function set_updated_at();
+
+create table if not exists agent_messages (
+  id uuid primary key default gen_random_uuid(),
+  session_id uuid not null references agent_sessions(id) on delete cascade,
+  company_id uuid not null references companies(id) on delete cascade,
+  role text not null check (role in ('user','assistant','system','tool')),
+  content text not null,
+  tool_calls jsonb,
+  created_at timestamptz not null default now()
+);
+create index if not exists agent_messages_session_idx on agent_messages (session_id, created_at);
+
+create table if not exists agent_tool_runs (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  user_id uuid references profiles(id) on delete set null,
+  tool_name text not null,
+  input jsonb,
+  output jsonb,
+  status text not null default 'ok', -- ok/error/draft
+  error_message text,
+  created_at timestamptz not null default now()
+);
+create index if not exists agent_tool_runs_company_idx on agent_tool_runs (company_id, created_at desc);
+
+create table if not exists web_research_results (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  source text not null, -- exa/firecrawl/browserbase
+  query text,
+  url text,
+  title text,
+  summary text,
+  content text,
+  metadata jsonb default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+create index if not exists web_research_company_idx on web_research_results (company_id, created_at desc);
+
+create table if not exists document_analyses (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  document_name text,
+  document_type text,
+  source_url text,
+  extracted_text text,
+  summary text,
+  key_findings jsonb default '[]'::jsonb,
+  risks jsonb default '[]'::jsonb,
+  recommendations jsonb default '[]'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists call_transcripts (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  provider text, -- gladia/vapi/telnyx
+  call_id text,
+  customer_id uuid references customers(id) on delete set null,
+  job_id uuid references jobs(id) on delete set null,
+  transcript text,
+  summary text,
+  sentiment text,
+  action_items jsonb default '[]'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists address_validations (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  original_address text not null,
+  normalized_address text,
+  valid boolean default false,
+  metadata jsonb default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists outbound_messages (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references companies(id) on delete cascade,
+  provider text, -- telnyx/resend
+  channel text, -- sms/email
+  recipient text not null,
+  subject text,
+  body text,
+  status text not null default 'draft', -- draft/approved/sent/failed
+  metadata jsonb default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+create index if not exists outbound_messages_company_idx on outbound_messages (company_id, created_at desc);
+
+-- RLS
+alter table integration_connections enable row level security;
+alter table agent_sessions enable row level security;
+alter table agent_messages enable row level security;
+alter table agent_tool_runs enable row level security;
+alter table web_research_results enable row level security;
+alter table document_analyses enable row level security;
+alter table call_transcripts enable row level security;
+alter table address_validations enable row level security;
+alter table outbound_messages enable row level security;
+
+do $$
+declare t text;
+begin
+  foreach t in array array[
+    'integration_connections','agent_sessions','agent_messages','agent_tool_runs',
+    'web_research_results','document_analyses','call_transcripts','address_validations',
+    'outbound_messages'
+  ]
+  loop
+    execute format('create policy "company select %1$s" on %1$I for select using (company_id = my_company_id())', t);
+    execute format('create policy "company insert %1$s" on %1$I for insert with check (company_id = my_company_id())', t);
+    execute format('create policy "company update %1$s" on %1$I for update using (company_id = my_company_id())', t);
+    execute format('create policy "company delete %1$s" on %1$I for delete using (company_id = my_company_id())', t);
+  end loop;
+end $$;

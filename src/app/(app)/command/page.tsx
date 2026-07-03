@@ -38,7 +38,7 @@ export default function CommandCenterPage() {
         title="Command Center"
         subtitle="Your AI CFO, COO, analyst, and consultant — sitting above the entire business"
         actions={
-          <Link href="/executive-chat" className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-gray-950 text-xs font-semibold rounded transition-colors">
+          <Link href="/command-center" className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-gray-950 text-xs font-semibold rounded transition-colors">
             <MessageSquare className="w-3.5 h-3.5" />Ask Titan anything
           </Link>
         }
@@ -151,7 +151,7 @@ export default function CommandCenterPage() {
         </Section>
 
         {/* Ask Titan footer */}
-        <Link href="/executive-chat" className="block bg-gradient-to-r from-amber-500/10 to-transparent border border-amber-500/20 rounded-lg p-5 hover:border-amber-500/40 transition-colors">
+        <Link href="/command-center" className="block bg-gradient-to-r from-amber-500/10 to-transparent border border-amber-500/20 rounded-lg p-5 hover:border-amber-500/40 transition-colors">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-amber-500/20 rounded-full flex items-center justify-center flex-shrink-0">
               <Sparkles className="w-4 h-4 text-amber-400" />

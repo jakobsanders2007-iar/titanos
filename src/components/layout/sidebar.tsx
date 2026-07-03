@@ -10,7 +10,7 @@ import {
   Bot, Settings, Brain, PhoneCall, KanbanSquare, UserPlus,
   FileSignature, ShoppingCart, GraduationCap, ClipboardList, Gauge,
   MessageSquare, HelpCircle, Target, ListChecks, History, FileStack,
-  Building2, Plug, ChevronDown, Activity,
+  Building2, Plug, ChevronDown, Activity, Sparkles, Search, Mic, Send,
 } from 'lucide-react'
 
 type NavItem = { href: string; label: string; icon: React.ElementType }
@@ -21,6 +21,7 @@ const intelligenceSections: NavSection[] = [
   {
     items: [
       { href: '/command', label: 'Command Center', icon: Gauge },
+      { href: '/command-center', label: 'Titan Agent', icon: Sparkles },
       { href: '/executive-chat', label: 'Executive Chat', icon: MessageSquare },
     ],
   },
@@ -32,6 +33,14 @@ const intelligenceSections: NavSection[] = [
       { href: '/action-plan', label: 'Action Plan', icon: ListChecks },
       { href: '/memory', label: 'Company Memory', icon: Brain },
       { href: '/connectors', label: 'Connectors', icon: Plug },
+    ],
+  },
+  {
+    label: 'Agent Tools',
+    items: [
+      { href: '/research', label: 'Research', icon: Search },
+      { href: '/voice', label: 'Voice', icon: Mic },
+      { href: '/messaging', label: 'Messaging', icon: Send },
     ],
   },
   {
