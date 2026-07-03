@@ -51,6 +51,7 @@ export const PROVIDER_CATALOG: ProviderMeta[] = [
   { provider: 'resend', label: 'Resend', category: 'Messaging', capability: 'Transactional email — reports, follow-ups, CEO packets', requiredEnv: ['RESEND_API_KEY'] },
   { provider: 'abstract', label: 'Abstract', category: 'Data Validation', capability: 'Email & phone validation, contact enrichment', requiredEnv: ['ABSTRACT_API_KEY'] },
   { provider: 'increase', label: 'Increase', category: 'Banking', capability: 'Banking connection status (read-only, never moves money)', requiredEnv: ['INCREASE_API_KEY'] },
+  { provider: 'hermes', label: 'Hermes Agent (Nous)', category: 'Documents & AI', capability: 'Preferred agentic reasoning engine — self-hosted gateway, OpenAI-compatible', requiredEnv: ['HERMES_BASE_URL', 'HERMES_API_KEY'] },
   { provider: 'azure', label: 'Azure OpenAI', category: 'Documents & AI', capability: 'Primary LLM reasoning, document & business analysis', requiredEnv: ['AZURE_OPENAI_API_KEY', 'AZURE_OPENAI_ENDPOINT', 'AZURE_OPENAI_DEPLOYMENT'] },
   { provider: 'grok', label: 'Grok', category: 'Documents & AI', capability: 'Alternative LLM reasoning & model comparison', requiredEnv: ['GROK_API_KEY'] },
   { provider: 'gina', label: 'Gina', category: 'Research & Web', capability: 'Generic connector (product API varies)', requiredEnv: ['GINA_API_KEY'] },

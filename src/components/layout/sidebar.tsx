@@ -22,6 +22,7 @@ const intelligenceSections: NavSection[] = [
   {
     items: [
       { href: '/command', label: 'Command Center', icon: Gauge },
+      { href: '/intelligence-demo', label: 'Intelligence Demo', icon: Brain },
       { href: '/live-ops', label: 'Live Ops Feed', icon: Activity },
       { href: '/command-center', label: 'Titan Agent', icon: Sparkles },
       { href: '/connect-business', label: 'Connect Your Business', icon: Plug },
